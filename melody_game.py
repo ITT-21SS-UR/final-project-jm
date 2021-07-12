@@ -39,8 +39,14 @@ class Game(QtWidgets.QWidget):
     seven_nation_army = [("E4", 1.0), ("E4", 0.5),("G4", 0.5),("E4", 0.5), ("D4", 0.5),("C4", 1.0),
                             ("B3", 1.0), ("E4", 1.0), ("E4", 0.5),("G4", 0.5), ("E4", 0.5),("D4", 0.5),
                                 ("C4", 0.5), ("D4", 0.5), ("C4", 0.5), ("B3", 1.0)]
-    seven_nation_army_tones = ["B3", "C4", "D4","E4","G4"]
-    alle_meine_entchen = [("C4", 1.0), ("D4", 1.0), ("E4", 1.0),]
+    seven_nation_army_tones = ["B3", "C4", "D4", "E4", "G4"]
+    alle_meine_entchen = [("C4", 0.5), ("D4", 0.5), ("E4", 0.5),("F4", 0.5),("G4", 1.0),("G4", 1.0),
+                            ("A4", 0.4),("A4", 0.4),("A4", 0.4),("A4", 0.4),("G4", 0.5),
+                                ("A4", 0.4),("A4", 0.4),("A4", 0.4),("A4", 0.4),("G4", 0.5),
+                                    ("F4", 0.3),("F4", 0.3),("F4", 0.3),("F4", 0.3),("E4", 0.5),
+                                        ("E4", 0.5),("D4", 0.3),("D4", 0.3),("D4", 0.3),("D4", 0.3),
+                                            ("C4", 0.8)]
+    alle_meine_entchen_tones = ["C4", "D4", "E4", "F4", "G4", "A4"]
     
 
     def __init__(self):
@@ -90,21 +96,39 @@ class Game(QtWidgets.QWidget):
             else:
                 return
             value_y = value_sensor['y']
+            value_z = value_sensor['z']
+            value_x = value_sensor['x']
             value_grav_y = value_gravitiy_sensor['y']
+            print(value_x)
             print(value_y)
-            print(value_grav_y)
+            print(value_z)
             print("_______________")
-            #self.play_tone()
+            self.play_tone(value_x, value_y, value_z)
             self.update()
         
-    def play_tone(self):
-        pass
+    def play_tone(self, x,y,z):
+        tone = ''
+        if x > 0 and z < 0.5 and (0.7 > y > -0.7) :
+            tone = self.alle_meine_entchen_tones[0]
+            self.player.play_wave(self.synthesizer.generate_constant_wave(tone,0.5))
+        if x < 0  and z < 0.5 and (0.7 > y > -0.7):
+            tone = self.alle_meine_entchen_tones[1]
+            self.player.play_wave(self.synthesizer.generate_constant_wave(tone, 0.5))
+        if y > 0.7 and (-0.2 < x < 0.2):
+            tone = self.alle_meine_entchen_tones[2]
+            self.player.play_wave(self.synthesizer.generate_constant_wave(tone, 0.5))
+        if y < -0.7 and (-0.2 < x < 0.2):
+            tone = self.alle_meine_entchen_tones[3]
+            self.player.play_wave(self.synthesizer.generate_constant_wave(tone, 0.5))
+        print(tone)
+
+
 
     def start_the_game(self):
         self.player.open_stream()
         self.game_state = GameState.START
-        #for i in range(len(self.seven_nation_army)):
-            #self.player.play_wave(self.synthesizer.generate_constant_wave(self.seven_nation_army[i][0],self.seven_nation_army[i][1]))
+        #for i in range(len(self.alle_meine_entchen)):
+            #self.player.play_wave(self.synthesizer.generate_constant_wave(self.alle_meine_entchen[i][0],self.alle_meine_entchen[i][1]))
    
 
         
