@@ -1,14 +1,18 @@
 Final Project
 
-*imported modules:
+** imported modules:
+
+*** synthesizer
 https://synthesizer.readthedocs.io/en/latest/synthesizer.html
 
-**Installation
+** Installation
 * $ pip install synthesizer
-**Install dependencies
-**Ubuntu
+
+Install dependencies
+Ubuntu
 * $ apt install portaudio19-dev
 * $ pip install pyaudio
-**macOS
+
+macOS
 * $ brew install portaudio
 * $ pip install pyaudio
