@@ -23,23 +23,21 @@ class GameState(Enum):
     START = 2
     DONE = 3
 
-class Songs():
-
-    def __init__(self):
-        super().__init__()
-    
-        
-
 class Game(QtWidgets.QWidget):
 
     
     sensor = ()
     timer = ()
+    song = []
+    points = 0
+    song_list = []
+    played_songs = []
     c_chord = ["C4", "E4", "G4"]
-    seven_nation_army = [("E4", 1.0), ("E4", 0.5),("G4", 0.5),("E4", 0.5), ("D4", 0.5),("C4", 1.0),
-                            ("B3", 1.0), ("E4", 1.0), ("E4", 0.5),("G4", 0.5), ("E4", 0.5),("D4", 0.5),
-                                ("C4", 0.5), ("D4", 0.5), ("C4", 0.5), ("B3", 1.0)]
+    seven_nation_army = [("E4", 0.7), ("E4", 0.3),("G4", 0.3),("E4", 0.3), ("D4", 0.3),("C4", 0.7),
+                            ("B3", 0.7), ("E4", 0.7), ("E4", 0.3),("G4", 0.3), ("E4", 0.3),("D4", 0.3),
+                                ("C4", 0.3), ("D4", 0.3), ("C4", 0.3), ("B3", 0.7)]
     seven_nation_army_tones = ["B3", "C4", "D4", "E4", "G4"]
+
     alle_meine_entchen = [("C4", 0.5), ("D4", 0.5), ("E4", 0.5),("F4", 0.5),("G4", 1.0),("G4", 1.0),
                             ("A4", 0.4),("A4", 0.4),("A4", 0.4),("A4", 0.4),("G4", 0.5),
                                 ("A4", 0.4),("A4", 0.4),("A4", 0.4),("A4", 0.4),("G4", 0.5),
@@ -47,6 +45,17 @@ class Game(QtWidgets.QWidget):
                                         ("E4", 0.5),("D4", 0.3),("D4", 0.3),("D4", 0.3),("D4", 0.3),
                                             ("C4", 0.8)]
     alle_meine_entchen_tones = ["C4", "D4", "E4", "F4", "G4", "A4"]
+
+    amours_toujours = [("E4", 0.4),("E4", 0.4),("C5", 0.4),("B4", 0.7),("B4", 0.4),("B4", 0.4),("C5", 0.4),
+                        ("A4", 0.7),("A4", 0.4),("A4", 0.4),("G4", 0.4),("A4", 0.4),("A4", 0.4),("A4", 0.4),
+                            ("G4", 0.4),("A4", 0.4),("G4", 0.4),("A4", 0.4),("G4", 0.4),("E4", 0.7),]
+    amours_toujours_tones = ["E4", "G4", "A4", "B4", "C5"]
+
+    satisfaction= [("D4", 0.7),("D4", 0.7),("D4", 0.4),("E4", 0.4),("F4", 0.7),("F4", 0.4),("F4", 0.4),
+                    ("E4", 0.4),("E4", 0.4),("D4", 0.7),("D4", 0.7),("D4", 0.4),("E4", 0.4),("F4", 0.7),
+                    ("F4", 0.4),("F4", 0.4), ("E4", 0.4),("E4", 0.4),("D4", 0.7),("D4", 0.7)]
+    satisfaction_tones = ["D4", "E4", "F4"]
+
     
 
     def __init__(self):
@@ -55,6 +64,8 @@ class Game(QtWidgets.QWidget):
         self.synthesizer = Synthesizer(osc1_waveform=Waveform.sine, osc1_volume=1.0, use_osc2=False)
         self.game_state = GameState.INTRO
         self.timer = QtCore.QTimer(self)
+        self.current_song_tones = []
+        self.current_song = []
         self.init_sensor()
         self.init_timer_game_loop()
         self.init_game()
@@ -107,28 +118,37 @@ class Game(QtWidgets.QWidget):
             self.update()
         
     def play_tone(self, x,y,z):
+        self.current_song_tones = self.seven_nation_army_tones
         tone = ''
-        if x > 0 and z < 0.5 and (0.7 > y > -0.7) :
-            tone = self.alle_meine_entchen_tones[0]
-            self.player.play_wave(self.synthesizer.generate_constant_wave(tone,0.5))
-        if x < 0  and z < 0.5 and (0.7 > y > -0.7):
-            tone = self.alle_meine_entchen_tones[1]
-            self.player.play_wave(self.synthesizer.generate_constant_wave(tone, 0.5))
-        if y > 0.7 and (-0.2 < x < 0.2):
-            tone = self.alle_meine_entchen_tones[2]
-            self.player.play_wave(self.synthesizer.generate_constant_wave(tone, 0.5))
-        if y < -0.7 and (-0.2 < x < 0.2):
-            tone = self.alle_meine_entchen_tones[3]
-            self.player.play_wave(self.synthesizer.generate_constant_wave(tone, 0.5))
+        if x > 0 and z < 0.5 and (0.2 > y > -0.2) :
+            tone = self.current_song_tones[0]
+        elif x < 0  and z < 0.5 and (0.2 > y > -0.2):
+            tone = self.current_song_tones[1]
+        elif y > 0.7 and (-0.2 < x < 0.2):
+            tone = self.current_song_tones[2]
+        elif y < -0.7 and (-0.2 < x < 0.2):
+            tone = self.current_song_tones[3]
+        elif x > 0 and z < 0.5 and ((0.7 > y > 0.2) or (-0.2 > y > -0.7)):
+            tone = self.current_song_tones[4]
+        elif x < 0  and z < 0.5 and ((0.7 > y > 0.2) or (-0.2 > y > -0.7)):
+            tone = self.current_song_tones[5]
+        if tone is not '':
+            self.synth_play_tone(tone)
         print(tone)
-
-
-
+    
     def start_the_game(self):
         self.player.open_stream()
         self.game_state = GameState.START
-        #for i in range(len(self.alle_meine_entchen)):
-            #self.player.play_wave(self.synthesizer.generate_constant_wave(self.alle_meine_entchen[i][0],self.alle_meine_entchen[i][1]))
+        #self.play_song(self.amours_toujours)
+    
+    def play_song(self,song):
+        for i in range(len(song)):
+            self.synth_play_tone(song[i][0],song[i][1])
+
+    
+    def synth_play_tone(self,tone,length=0.5):
+        self.player.play_wave(self.synthesizer.generate_constant_wave(tone, length))
+
    
 
         
