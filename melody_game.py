@@ -1,5 +1,3 @@
-import pygame
-import pygame_menu
 from synthesizer import Player, Synthesizer, Waveform
 import pyaudio
 import wave
@@ -29,9 +27,11 @@ class Game(QMainWindow):
     timer = ()
     song = []
     points = 0
-    song_list = ["seven_nation_army", "amours_toujours", "satisfaction"]
+    round_points = 0
+    song_list = ["seven_nation_army", "amours_toujours", "i_cant_get_no_satisfaction"]
     played_songs = []
     played_tones = []
+    played_tone = ""
     current_song = ""
     round = 0
     c_chord = ["C4", "E4", "G4"]
@@ -53,10 +53,10 @@ class Game(QMainWindow):
                             ("G4", 0.4),("A4", 0.4),("G4", 0.4),("A4", 0.4),("G4", 0.4),("E4", 0.7),]
     amours_toujours_tones = ["E4", "G4", "A4", "B4", "C5"]
 
-    satisfaction= [("D4", 0.7),("D4", 0.7),("D4", 0.4),("E4", 0.4),("F4", 0.7),("F4", 0.4),("F4", 0.4),
-                    ("E4", 0.4),("E4", 0.4),("D4", 0.7),("D4", 0.7),("D4", 0.4),("E4", 0.4),("F4", 0.7),
-                    ("F4", 0.4),("F4", 0.4), ("E4", 0.4),("E4", 0.4),("D4", 0.7),("D4", 0.7)]
-    satisfaction_tones = ["D4", "E4", "F4"]
+    i_cant_get_no_satisfaction= [("D4", 0.7),("D4", 0.7),("D4", 0.4),("E4", 0.4),("F4", 0.7),("F4", 0.4),("F4", 0.4),
+                    ("E4", 0.4),("E4", 0.4),("D4", 0.7),("D4", 0.7),("D4", 0.4),("D4", 0.4),("E4", 0.4),("F4", 0.7),
+                    ("F4", 0.4),("F4", 0.4), ("E4", 0.4),("E4", 0.4),("D4", 0.7),("D4", 0.7),("D4", 0.7)]
+    i_cant_get_no_satisfaction_tones = ["D4", "E4", "F4"]
 
     
 
@@ -67,8 +67,8 @@ class Game(QMainWindow):
         self.synthesizer = Synthesizer(osc1_waveform=Waveform.sine, osc1_volume=1.0, use_osc2=False)
         self.game_state = GameState.INTRO
         self.timer = QTimer(self)
-        self.current_song_tones = []
-        self.default = "off"
+        self.current_tones = []
+        self.last_played_tone = ""
         self.init_sensor()
         self.init_timer_game_loop()
         self.init_game()
@@ -92,12 +92,24 @@ class Game(QMainWindow):
         self.game_info.move(220,50)
         self.game_info.setVisible(False)
         
-        self.help_button = QPushButton(self)
+        self.song_name = QLabel(self)
+        self.song_name.setText("Song name: "+ self.current_song)
+        self.song_name.setMinimumSize(400,50)
+        self.song_name.move(220,80)
+        self.song_name.setVisible(False)
+        
+        self.points_info = QLabel(self)
+        self.points_info.setText("Points: " + str(self.points))
+        self.points_info.setMinimumSize(400,50)
+        self.points_info.move(220,110)
+        self.points_info.setVisible(False)
+        
+        """ self.help_button = QPushButton(self)
         self.help_button.setText("FAQ")
         self.help_button.setMinimumSize(10,30)
         self.help_button.setStyleSheet("background-color: lightgreen")
         self.help_button.move(700,10)
-        self.help_button.clicked.connect(self.help_button_clicked)
+        self.help_button.clicked.connect(self.help_button_clicked) """
 
         self.play_melody = QPushButton(self)
         self.play_melody.setText("Play Melody")
@@ -119,37 +131,67 @@ class Game(QMainWindow):
         self.compete_button.setMinimumSize(150,100)
         self.compete_button.setStyleSheet("background-color: red")
         self.compete_button.move(600,150)
-        self.compete_button.clicked.connect(self.compete_button_clicked)
+        self.compete_button.clicked.connect(self.compete_button_clicked)        
 
     def paintEvent(self,event):
-        painter = QPainter(self)
+        self.tone_rect_0 = QRect(375,200,75,75)
+        self.tone_rect_1 = QRect(250,300,75,75)
+        self.tone_rect_2 = QRect(250,400,75,75)
+        self.tone_rect_3 = QRect(375,500,75,75)
+        self.tone_rect_4 = QRect(500,400,75,75)
+        self.tone_rect_5 = QRect(500,300,75,75)
+        pt = QPainter()
+        pt.begin(self)
+        pt.setPen(QPen(Qt.black))
+        pt.drawEllipse(self.tone_rect_0)
+        pt.drawEllipse(self.tone_rect_1)
+        pt.drawEllipse(self.tone_rect_2)
+        pt.drawEllipse(self.tone_rect_3)
+        pt.drawEllipse(self.tone_rect_4)
+        pt.drawEllipse(self.tone_rect_5)
+
+        if self.played_tone != "":
+            tone_rect = "tone_rect_" + self.played_tone
+            played_tone_rect = getattr(self,tone_rect)
+            brush = QBrush(Qt.yellow)
+            pt.setBrush(brush)
+            pt.drawEllipse(played_tone_rect)
+
+        if self.game_state == GameState.START:
+            for i in range(5):
+                tone_rect = "tone_rect_" + str(i +1)
+                try:
+                    pt.drawText(getattr(self, tone_rect), Qt.AlignCenter,self.current_tones[i])
+                except IndexError:
+                    pass
+
+
+        pt.end()
+
+        """ painter = QPainter(self)
         #painter.begin(self)
         painter.setPen(QPen(Qt.blue))
         painter.translate(400, 300)
         for i in range(6):
             painter.drawLine(0, 0, 150, 0)
             painter.rotate(60)
-        painter.end()
+        painter.end() """
 
 
-    def help_button_clicked(self):
-        faq_box = QDialog(self)
-        faq_box.move(0,0)
-        faq_box.setMinimumSize(600,300)
-        text1 = QLabel("with your DIPPID device activated you can play five tones", faq_box)
-        text2 = QLabel("The following grid shows tone values with 1 very deep and 5 very high", faq_box)
+    def round_done(self):
+        self.round_ended_box = QDialog(self)
+        self.round_ended_box.move(0,0)
+        self.round_ended_box.setMinimumSize(400,200)
+        text1 = QLabel("Round no " + str(self.round) + " done. You made " + str(self.round_points) + " Points. \n"
+                            "Press the Button below to start a new round", self.round_ended_box)
         text1.move(10,10)
-        text2.move(10,30)
-        table = QTableWidget(faq_box)
-        table.setRowCount(5)
-        table.setColumnCount(1)
-        table.setItem(0,0, QTableWidgetItem("left"))
-        table.setItem(1,0, QTableWidgetItem("right"))
-        table.setItem(2,0, QTableWidgetItem("up"))
-        table.setItem(3,0, QTableWidgetItem("down"))
-        table.setItem(4,0, QTableWidgetItem("steady"))
-        table.move(10,80)
-        faq_box.open()
+        self.new_round_button = QPushButton(self.round_ended_box)
+        self.new_round_button.setText("New Round")
+        self.new_round_button.setMinimumSize(100,60)
+        self.new_round_button.setStyleSheet("background-color: lightgreen")
+        self.new_round_button.move(150,100)
+        self.new_round_button.clicked.connect(self.new_round) 
+        self.round_ended_box.open()
     
     def practice_button_clicked(self):
         self.practice_button.setEnabled(False)
@@ -163,19 +205,12 @@ class Game(QMainWindow):
         self.switch_mode_label.setVisible(False)
         self.game_info.setVisible(True)
         self.play_melody.setVisible(True)
+        self.song_name.setVisible(True)
+        self.points_info.setVisible(True)
         print("compete button click!")
         self.start_the_game()
 
     def init_game(self):
-        #pygame.init()
-        #surface = pygame.display.set_mode((600, 600))
-        #menu = pygame_menu.Menu('Welcome', 400, 300,
-                        #theme=pygame_menu.themes.THEME_GREEN)
-
-        #menu.add.text_input('Name :', default='')
-        #menu.add.button('Play', self.start_the_game)
-        #menu.add.button('Quit', pygame_menu.events.EXIT)
-        #menu.mainloop(surface)
         pass
 
     def init_sensor(self):
@@ -207,9 +242,16 @@ class Game(QMainWindow):
             value_z = value_sensor['z']
             value_x = value_sensor['x']
             value_grav_y = value_gravitiy_sensor['y']
-            self.play_tone(value_x, value_y, value_z)
+            if len(self.played_tones) < len(self.current_song):
+                self.play_tone(value_x, value_y, value_z)
+            else:
+                self.show_round_result()
             self.update()
         
+    def show_round_result(self):
+        self.points_info.setText("Points: " + str(self.points))
+        self.round_done()
+
     """ 
     old moves
 
@@ -238,55 +280,56 @@ class Game(QMainWindow):
 
 
     def play_tone(self, x,y,z):
-        #self.current_song_tones = self.seven_nation_army_tones
         tone = ''
+        self.played_tone = ""
         if (0.33 > x > -0.33) and (0.76 < y < 1) :
             tone = ''
-            self.default = "on"
+            self.played_tone = "0"
         elif (0.33 < x < 1) and (0.76 > y > 0):
             try: 
                 tone = self.current_tones[0]
             except IndexError:
                 tone = ''
-            self.default = "off"
+            self.played_tone = "1"
         elif (0.33 < x < 1) and (-0.76 < y < 0):
             try: 
                 tone = self.current_tones[1]
             except IndexError:
                 tone = ''
-            self.default = "off"
+            self.played_tone = "2"
         elif (0.33 > x > -0.33) and (-0.76 > y < -1):
             try: 
                 tone = self.current_tones[2]
             except IndexError:
                 tone = ''
-            self.default = "off"
+            self.played_tone="3"
         elif (-0.33 > x > -1) and (-0-76 < y < 0):
             try: 
                 tone = self.current_tones[3]
             except IndexError:
                 tone = ''
-            self.default = "off"
+            self.played_tone = "4"
         elif (-1 < x < -0.33) and (0 < y < 0.76):
             try: 
                 tone = self.current_tones[4]
             except IndexError:
                 tone = ''            
-            self.default = "off"
-        if tone != '':
+            self.played_tone = "5"
+        if (tone != '') and (self.last_played_tone != self.played_tone):
             self.synth_play_tone(tone)
-        self.played_tones += tone
+            self.played_tones += tone
+        self.last_played_tone = self.played_tone
     
     def start_the_game(self):
         self.player.open_stream()
         self.game_state = GameState.START
         self.new_round()
-        #self.paintEvent()
 
     
     def play_song(self,song):
         for i in range(len(song)):
             self.synth_play_tone(song[i][0],song[i][1])
+            self.played_tone = song[i][0]
     
     def calc_points(self):
         song = getattr(self,self.current_song)
@@ -300,10 +343,17 @@ class Game(QMainWindow):
         self.player.play_wave(self.synthesizer.generate_constant_wave(tone, length))
 
     def new_round(self):
+        print(self.round)
+        print("new round")
         if self.round != 0:
             self.played_songs += self.current_song
             self.calc_points()
+            self.round_ended_box.close()
         self.select_new_song()
+        song_name = self.current_song.replace("_", " ")
+        song_name = song_name.capitalize()
+        self.song_name.setText("Song name: " + song_name)
+        self.played_tones = []
         self.round += 1
 
     def select_new_song(self):
