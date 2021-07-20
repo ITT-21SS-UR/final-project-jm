@@ -249,16 +249,17 @@ class Game(QMainWindow):
         self.timer.timeout.connect(self.game_loop)
         self.timer.start(30)
 
+        
     def game_loop(self):
         if self.game_state == GameState.START:
-            if self.sensor.has_capability('accelerometer'):
-                value_sensor = self.sensor.get_value('accelerometer')
+            state_of_button = self.sensor.get_value('button_1')
+            value_sensor = self.sensor.get_value('accelerometer')
+            if state_of_button == 1:
+                print(value_sensor)
             else:
                 return
-            if self.sensor.has_capability('gravity'):
-                value_gravitiy_sensor = self.sensor.get_value('gravity')
-            else:
-                return
+            time.sleep(0.1)
+
             value_y = value_sensor['y']
             value_z = value_sensor['z']
             value_x = value_sensor['x']
@@ -268,8 +269,8 @@ class Game(QMainWindow):
                 self.show_round_result()
             self.update()
         elif self.game_state == GameState.DONE:
-            pass
-
+            pass   
+        
     def show_round_result(self):
         if self.round == self.amount_rounds:
             self.game_state = GameState.DONE
