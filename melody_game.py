@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
+import time
 import sys
 import math
 import random
@@ -23,14 +24,14 @@ class GameState(Enum):
 
 
 class Game(QMainWindow):
-    amount_rounds = 1
+    amount_rounds = 5
     sensor = ()
     timer = ()
     song = []
     points = 0
     round_points = 0
-    song_list = ["seven_nation_army",
-                 "amours_toujours", "i_cant_get_no_satisfaction"]
+    song_list = ["seven_nation_army","amours_toujours", "i_cant_get_no_satisfaction","come_as_you_are", "smoke_on_the_water",
+                    "another_one_bites_the_dust"]
     played_songs = []
     played_tones = []
     played_tone = ""
@@ -38,46 +39,36 @@ class Game(QMainWindow):
     round = 0
     c_chord = ["C4", "E4", "G4"]
     seven_nation_army = [("E4", 0.7), ("E4", 0.3), ("G4", 0.3), ("E4", 0.3), ("D4", 0.3), ("C4", 0.7),
-                         ("B3", 0.7), ("E4", 0.7), ("E4",
-                                                    0.3), ("G4", 0.3), ("E4", 0.3), ("D4", 0.3),
-                         ("C4", 0.3), ("D4", 0.3), ("C4", 0.3), ("B3", 0.7)]
+                            ("B3", 0.7), ("E4", 0.7), ("E4",0.3), ("G4", 0.3), ("E4", 0.3), ("D4", 0.3),
+                                ("C4", 0.3), ("D4", 0.3), ("C4", 0.3), ("B3", 0.7)]
     seven_nation_army_tones = ["B3", "C4", "D4", "E4", "G4"]
 
-    alle_meine_entchen = [("C4", 0.5), ("D4", 0.5), ("E4", 0.5), ("F4", 0.5), ("G4", 1.0), ("G4", 1.0),
-                          ("A4", 0.4), ("A4", 0.4), ("A4",
-                                                     0.4), ("A4", 0.4), ("G4", 0.5),
-                          ("A4", 0.4), ("A4", 0.4), ("A4",
-                                                     0.4), ("A4", 0.4), ("G4", 0.5),
-                          ("F4", 0.3), ("F4", 0.3), ("F4",
-                                                     0.3), ("F4", 0.3), ("E4", 0.5),
-                          ("E4", 0.5), ("D4", 0.3), ("D4",
-                                                     0.3), ("D4", 0.3), ("D4", 0.3),
-                          ("C4", 0.8)]
-    alle_meine_entchen_tones = ["C4", "D4", "E4", "F4", "G4", "A4"]
 
     amours_toujours = [("E4", 0.4), ("E4", 0.4), ("C5", 0.4), ("B4", 0.7), ("B4", 0.4), ("B4", 0.4), ("C5", 0.4),
-                       ("A4", 0.7), ("A4", 0.4), ("A4", 0.4), ("G4",
-                                                               0.4), ("A4", 0.4), ("A4", 0.4), ("A4", 0.4),
-                       ("G4", 0.4), ("A4", 0.4), ("G4", 0.4), ("A4", 0.4), ("G4", 0.4), ("E4", 0.7), ]
+                        ("A4", 0.7), ("A4", 0.4), ("A4", 0.4), ("G4",0.4), ("A4", 0.4), ("A4", 0.4), ("A4", 0.4),
+                            ("G4", 0.4), ("A4", 0.4), ("G4", 0.4), ("A4", 0.4), ("G4", 0.4), ("E4", 0.7), ]
     amours_toujours_tones = ["E4", "G4", "A4", "B4", "C5"]
 
     i_cant_get_no_satisfaction = [("D4", 0.7), ("D4", 0.7), ("D4", 0.4), ("E4", 0.4), ("F4", 0.7), ("F4", 0.4), ("F4", 0.4),
-                                  ("E4", 0.4), ("E4", 0.4), ("D4", 0.7), ("D4",
-                                                                          0.7), ("D4", 0.4), ("D4", 0.4), ("E4", 0.4), ("F4", 0.7),
-                                  ("F4", 0.4), ("F4", 0.4), ("E4", 0.4), ("E4", 0.4), ("D4", 0.7), ("D4", 0.7), ("D4", 0.7)]
+                                    ("E4", 0.4), ("E4", 0.4), ("D4", 0.7), ("D4",0.7), ("D4", 0.4), ("D4", 0.4), ("E4", 0.4), 
+                                        ("F4", 0.7),("F4", 0.4), ("F4", 0.4), ("E4", 0.4), ("E4", 0.4), ("D4", 0.7), ("D4", 0.7), 
+                                            ("D4", 0.7)]
     i_cant_get_no_satisfaction_tones = ["D4", "E4", "F4"]
 
-    smoke_on_the_water = []
-    smoke_on_the_water_tones = []
+    smoke_on_the_water = [("E4", 0.4), ("G4", 0.4), ("A4", 0.4), ("E4", 0.4), ("G4", 0.4),("A#4", 0.4),("A4", 0.4),
+                            ("E4", 0.4), ("G4", 0.4), ("A4", 0.4),("E4", 0.4), ("G4", 0.4)]
+    smoke_on_the_water_tones = ["E4","G4", "A4", "A#4"]
 
-    come_as_you_are = []
-    come_as_you_are_tones = []
+    come_as_you_are = [("B3", 0.4),("B3", 0.4),("C4", 0.4),("C#4", 0.4),("E4", 0.4),("C#4", 0.4),("E4", 0.4),("C#4", 0.4),
+                                ("C#4", 0.4),("C4", 0.4),("B3", 0.4),("F#4", 0.4),("B3", 0.4),("B3", 0.4),("B3", 0.4),("B3", 0.4),
+                                    ("C4", 0.4),("C#4", 0.4),("E4", 0.4),("C#4", 0.4),("E4", 0.4),("C#4", 0.4),("C#4", 0.4),("C4", 0.4),
+                                        ("B3", 0.4),("F#4", 0.4),("B3", 0.4),("B3", 0.4),]
+    come_as_you_are_tones = ["B3", "C4", "C#4", "E4", "F#4"]
 
-    another_one_bites_the_dust = []
-    another_one_bites_the_dust_tones = []
 
-    smooth_criminal = []
-    smooth_criminal_tones = []
+    another_one_bites_the_dust = [("D3", 0.4),("D3", 0.4),("D3", 0.4),("D3", 0.4),("D3", 0.4),("F3", 0.4),("D3", 0.4),("G3", 0.4),
+                                    ("D3", 0.4),("D3", 0.4),("D3", 0.4),("D3", 0.4),("B3", 0.4),("F3", 0.4),("D3", 0.4),("G3", 0.4)]
+    another_one_bites_the_dust_tones = ["D3", "F3", "G3"]
 
     def __init__(self):
         super().__init__()
