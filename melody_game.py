@@ -14,6 +14,17 @@ from enum import Enum
 
 from DIPPID import SensorUDP
 
+"""
+Script by Marco Beetz & Joshua Benker
+
+Melody Game
+_________________
+
+Play famous melodies
+Rotate your dippid device like a clock and jam your favorite classic melodies
+
+"""
+
 SENSOR_PORT = 5700
 
 # state of the game
@@ -22,8 +33,10 @@ class GameState(Enum):
     START = 2
     DONE = 3
 
-
+# main game class 
+# all important variables and functions
 class Game(QMainWindow):
+
     amount_rounds = 5
     sensor = ()
     timer = ()
@@ -87,6 +100,7 @@ class Game(QMainWindow):
         self.init_game()
         self.initUIComponents()
 
+    # main ui function for initalising and configuring the ui components like buttons and labels
     def initUIComponents(self):
         self.title_label = QLabel(self)
         self.title_label.setFont(QFont("Helvetica", 20))
@@ -95,7 +109,7 @@ class Game(QMainWindow):
         self.title_label.move(240, 0)
 
         self.game_info_label = QLabel(self)
-        self.game_info_label.setText("Press the Button below to practice or to play the game! \n"
+        self.game_info_label.setText("Press the Button below to play or practice the game! \n"
                                        "  You can play melodies by moving your dippid device!")
         self.game_info_label.setMinimumSize(400, 50)
         self.game_info_label.move(220, 50)
@@ -166,7 +180,8 @@ class Game(QMainWindow):
         self.game_done_info.move(220, 300)
         self.game_done_info.setVisible(False)
 
-
+    # paint function
+    # paints the clock-alike design for visualising the played tones
     def paintEvent(self, event):
         pt = QPainter()
         pt.begin(self)
@@ -204,13 +219,18 @@ class Game(QMainWindow):
                 except IndexError:
                     pass
         pt.end()
+        self.update()
 
+    # gets called when the player wants to practice
+    # adjusts the ui
     def practice_button_clicked(self):
         self.practice_button.setEnabled(False)
         self.start_button.setEnabled(True)
         print("practice button click!")
         # self.handle_dippid_input()
 
+    # adjusts the ui when the "start game" button was clicked
+    # calls the start_game function
     def start_button_clicked(self):
         self.practice_button.setVisible(False)
         self.start_button.setVisible(False)
@@ -222,16 +242,14 @@ class Game(QMainWindow):
         self.game_done_info.setVisible(False)
         self.start_the_game()
 
-    def init_game(self):
-        pass
 
+
+    # button 1 
+    # not used but could be nice for a further version
     def init_sensor(self):
         BUTTON_START = 'button_1'
         self.sensor = SensorUDP(SENSOR_PORT)
-        self.sensor.register_callback(BUTTON_START, self.button_start_pressed)
-
-    def button_start_pressed(self, data):
-        pass
+        #self.sensor.register_callback(BUTTON_START, self.button_start_pressed)
 
     # game loop
     # found on https://doc.qt.io/qtforpython-5/PySide2/QtCore/QTimer.html
@@ -240,7 +258,9 @@ class Game(QMainWindow):
         self.timer.timeout.connect(self.game_loop)
         self.timer.start(30)
 
-        
+    # main game loop 
+    # inits the sensor data 
+    # calls the "play_tone" func and checks if the round is finsished
     def game_loop(self):
         if self.game_state == GameState.START:
             state_of_button = self.sensor.get_value('button_1')
@@ -262,6 +282,10 @@ class Game(QMainWindow):
         elif self.game_state == GameState.DONE:
             pass   
         
+    # shows the results of the past round
+    # checks if player has played the given amount of rounds -> game done
+    # calls the calculate points function
+    # adjusts the ui
     def show_round_result(self):
         if self.round == self.amount_rounds:
             self.game_state = GameState.DONE
@@ -278,9 +302,13 @@ class Game(QMainWindow):
             self.round_info.setVisible(True)
             self.points_info.setText("Points: " + str(self.points))
 
+    # gets called when the player wants to hear the current melody
     def play_current_melody(self):
         self.play_song(self.song)
 
+    # handles the sensor dippid data 
+    # plays different tone depending to the angle of the dippid device
+    # appends the tone to the played tone list for later calculating of the points
     def play_tone(self, x, y, z):
         tone = ''
         self.played_tone = ""
@@ -322,26 +350,32 @@ class Game(QMainWindow):
             self.played_tones.append(tone)
         self.last_played_tone = self.played_tone
 
+    # sets the game state to "start" when a new game is started
     def start_the_game(self):
         self.player.open_stream()
         self.game_state = GameState.START
         self.new_game()
         self.new_round()
 
+    # plays a song by calling the synthesizer with midi notes
     def play_song(self, song):
         for i in range(len(song)):
             self.synth_play_tone(song[i][0], song[i][1])
 
+    # calculates the general and round points 
     def calc_points(self):
         for i in range(len(self.played_tones)):
             if self.song[i][0] == self.played_tones[i]:
                 self.points += 1
                 self.round_points += 1
 
+    # calls the synthesizer to play a given tone
     def synth_play_tone(self, tone, length=0.5):
         self.player.play_wave(
             self.synthesizer.generate_constant_wave(tone, length))
 
+    # new round function
+    # selects a new song and updates the ui 
     def new_round(self):
         self.round_points = 0
         if self.round != 0:
@@ -357,12 +391,16 @@ class Game(QMainWindow):
         self.points_to_calc = "on"
         self.round += 1
 
+    # selects a new random song from the song list 
     def select_new_song(self):
         self.current_song = random.choice(self.song_list)
         self.current_tones = getattr(self, self.current_song + "_tones")
         if (self.current_song in self.played_songs):
             self.select_new_song()
 
+    # gets called when the game is done
+    # adjusts the ui components 
+    # mainly visibility
     def game_done(self):
         self.dippid_info_label.setVisible(False)
         self.play_melody.setVisible(False)
@@ -374,6 +412,8 @@ class Game(QMainWindow):
         self.song_name.setText("Song name: ")
 
 
+    # gets called when a new is started. 
+    # set all variables to the start state
     def new_game(self):
         self.points = 0
         self.current_song = ""
