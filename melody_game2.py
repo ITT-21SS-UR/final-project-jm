@@ -55,6 +55,7 @@ class Game(QMainWindow):
     played_tone = ""
     current_song = ""
     round = 0
+    button_pressed = False
     c_chord = ["C4", "E4", "G4"]
 
     def __init__(self):
@@ -272,17 +273,20 @@ class Game(QMainWindow):
         if self.game_state == GameState.START:
             state_of_button = self.sensor.get_value('button_1')
             value_sensor = self.sensor.get_value('accelerometer')
-            if state_of_button == 1:
-                print(value_sensor)
-            else:
-                return
+            
             time.sleep(0.1)
 
             value_y = value_sensor['y']
             value_z = value_sensor['z']
             value_x = value_sensor['x']
             if len(self.played_tones) < len(self.song):
-                self.play_tone(value_x, value_y, value_z)
+                if state_of_button == 1 and self.button_pressed == False:
+                    print("button pressed")
+                    self.play_tone(value_x, value_y, value_z)
+                    self.button_pressed = True
+                elif state_of_button == 0:
+                    print("button not pressed")
+                    self.button_pressed = False
             else:
                 self.show_round_result()
             self.update()
@@ -352,7 +356,8 @@ class Game(QMainWindow):
             except IndexError:
                 tone = ''
             self.played_tone = "5"
-        if (tone != '') and (self.last_played_tone != self.played_tone):
+            #and (self.last_played_tone != self.played_tone)
+        if (tone != ''):
             self.synth_play_tone(tone)
             self.played_tones.append(tone)
         self.last_played_tone = self.played_tone
