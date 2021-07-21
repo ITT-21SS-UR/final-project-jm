@@ -107,6 +107,11 @@ class Game(QMainWindow):
         self.title_label.setText("Welcome to our Melody Game!")
         self.title_label.setMinimumSize(400, 75)
         self.title_label.move(240, 0)
+        
+        self.help_button = QPushButton(self)
+        self.help_button.setGeometry(750,20,30,30)
+        self.help_button.clicked.connect(self.help_button_clicked)
+        self.help_button.setIcon(QIcon('info_icon.png'))
 
         self.game_info_label = QLabel(self)
         self.game_info_label.setText("Press the Button below to play or practice the game! \n"
@@ -179,7 +184,36 @@ class Game(QMainWindow):
         self.game_done_info.setMinimumSize(400, 50)
         self.game_done_info.move(220, 300)
         self.game_done_info.setVisible(False)
+        
+    def help_button_clicked(self):
+        self.help_box = QDialog(self)
+        self.help_box.setGeometry(0,0,650,400)
+        line1 = QLabel("1) Put your phone steady in front of the computer", self.help_box)
+        line1.move(10,10)
+        line2 = QLabel("2) Get DIPPID ready and activate send data function", self.help_box)
+        line2.move(10,40)
+        line3 = QLabel("3) Go into practice mode and play some sounds", self.help_box)
+        line3.move(10,70)
+        line4 = QLabel("4) Turn the phone around like a clock towards the circles", self.help_box)
+        line4.move(10,100)
+        line5 = QLabel("5) After turning the phone press button 1 or button 2 once", self.help_box)
+        line5.move(10,130)
+        line6 = QLabel("6) The sound is played according to your position when you pressed the button", self.help_box)
+        line6.move(10,160)
+        line7 = QLabel("If you feel comfortable, switch to play mode and try to recreate a well-known melody", self.help_box)
+        line7.move(10,230)
+        line8 = QLabel("Play one sound after another and get feedback how well you performed", self.help_box)
+        line8.move(10,260)
+        line9 = QLabel("Wait: Do not press and hold the button, press it only once when you turned your phone", self.help_box)
+        font = PyQt5.QtGui.QFont()
+        font.setBold(True)
+        line9.setFont(font)
+        line9.setStyleSheet("color: rgb(255,0,0)")
+        line9.move(10,300)
+        self.help_box.open()
 
+        
+        
     # paint function
     # paints the clock-alike design for visualising the played tones
     def paintEvent(self, event):
