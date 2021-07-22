@@ -84,3 +84,7 @@ def select_new_song():
     random_song = random.choice(list(d.keys()))
     random_values = d.get(random_song)
     return random_song, random_values
+
+def select_practice_tones():
+    practice_tones = ["C4", "D4", "E4", "F4", "A4"]
+    return practice_tones
