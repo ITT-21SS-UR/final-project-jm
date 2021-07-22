@@ -3,6 +3,8 @@ from synthesizer import Player, Synthesizer, Waveform
 import pyaudio
 import wave
 
+
+
 from PyQt5 import *
 
 from PyQt5.QtWidgets import *
@@ -37,6 +39,7 @@ class GameState(Enum):
     INTRO = 1
     START = 2
     DONE = 3
+    PRACTICE = 4
 
 # main game class 
 # all important variables and functions
@@ -197,7 +200,8 @@ class Game(QMainWindow):
         background_brush = QBrush(QColor(255, 170, 255), Qt.SolidPattern)
         pt.fillRect(background_rect, background_brush)
 
-        if self.game_state == GameState.START:
+
+        if (self.game_state == GameState.START) or (self.game_state == GameState.PRACTICE):
             self.tone_rect_0 = QRect(365, 200, 75, 75)
             self.tone_rect_1 = QRect(240, 300, 75, 75)
             self.tone_rect_2 = QRect(240, 400, 75, 75)
@@ -235,6 +239,9 @@ class Game(QMainWindow):
         self.practice_button.setEnabled(False)
         self.start_button.setEnabled(True)
         print("practice button click!")
+        self.game_state = GameState.PRACTICE
+        print(self.game_state)
+        self.current_tones = melodies.select_practice_tones()
         # self.handle_dippid_input()
 
     # adjusts the ui when the "start game" button was clicked
@@ -271,27 +278,37 @@ class Game(QMainWindow):
     # calls the "play_tone" func and checks if the round is finsished
     def game_loop(self):
         if self.game_state == GameState.START:
-            state_of_button = self.sensor.get_value('button_1')
-            value_sensor = self.sensor.get_value('accelerometer')
-            
-            time.sleep(0.1)
-
-            value_y = value_sensor['y']
-            value_z = value_sensor['z']
-            value_x = value_sensor['x']
+            self.get_sensor_data()
             if len(self.played_tones) < len(self.song):
-                if state_of_button == 1 and self.button_pressed == False:
-                    print("button pressed")
-                    self.play_tone(value_x, value_y, value_z)
+                if self.state_of_button == 1 and self.button_pressed == False:
+                    self.play_tone(self.value_x, self.value_y, self.value_z)
                     self.button_pressed = True
-                elif state_of_button == 0:
-                    print("button not pressed")
+                elif self.state_of_button == 0:
                     self.button_pressed = False
             else:
                 self.show_round_result()
             self.update()
+        elif self.game_state == GameState.PRACTICE:
+            self.get_sensor_data()
+            if self.state_of_button == 1 and self.button_pressed == False:
+                    self.play_tone(self.value_x, self.value_y, self.value_z)
+                    self.button_pressed = True
+            elif self.state_of_button == 0:
+                    self.button_pressed = False
+
         elif self.game_state == GameState.DONE:
             pass   
+
+    def get_sensor_data(self):
+        try:
+                self.state_of_button = self.sensor.get_value('button_1')
+                self.value_sensor = self.sensor.get_value('accelerometer')
+                time.sleep(0.1)
+                self.value_y = self.value_sensor['y']
+                self.value_z = self.value_sensor['z']
+                self.value_x = self.value_sensor['x']
+        except TypeError:
+            pass
         
     # shows the results of the past round
     # checks if player has played the given amount of rounds -> game done
@@ -308,13 +325,14 @@ class Game(QMainWindow):
             self.next_round_button.setVisible(True)
             text1 = "Round no " + \
                 str(self.round) + " done.  \n You made " + \
-                str(self.round_points) + " Points."
+                str(self.round_points) + " of " + str(len(self.song)) + " Points." 
             self.round_info.setText(text1)
             self.round_info.setVisible(True)
             self.points_info.setText("Points: " + str(self.points))
 
     # gets called when the player wants to hear the current melody
     def play_current_melody(self):
+        self.played_tones = self.song
         self.play_song(self.song)
 
     # handles the sensor dippid data 
