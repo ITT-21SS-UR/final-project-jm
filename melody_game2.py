@@ -219,8 +219,8 @@ class Game(QMainWindow):
         background_brush = QBrush(QColor(255, 170, 255), Qt.SolidPattern)
         pt.fillRect(background_rect, background_brush)
 
-        if (self.game_state == GameState.START) or
-        (self.game_state == GameState.PRACTICE):
+        if (self.game_state == GameState.START) or\
+                (self.game_state == GameState.PRACTICE):
             self.tone_rect_0 = QRect(365, 200, 75, 75)
             self.tone_rect_1 = QRect(240, 300, 75, 75)
             self.tone_rect_2 = QRect(240, 400, 75, 75)
