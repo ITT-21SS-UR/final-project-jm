@@ -3,8 +3,6 @@ from synthesizer import Player, Synthesizer, Waveform
 import pyaudio
 import wave
 
-
-
 from PyQt5 import *
 
 from PyQt5.QtWidgets import *
@@ -58,6 +56,7 @@ class Game(QMainWindow):
     played_tone = ""
     current_song = ""
     round = 0
+    note_to_play = ""
     button_pressed = False
     c_chord = ["C4", "E4", "G4"]
 
@@ -114,13 +113,19 @@ class Game(QMainWindow):
         self.points_info.setMinimumSize(400, 50)
         self.points_info.move(220, 110)
         self.points_info.setVisible(False)
+        
+        self.played_tones_label = QLabel(self)
+        self.played_tones_label.setText("Played notes: ")
+        self.played_tones_label.setMinimumSize(400, 50)
+        self.played_tones_label.move(220, 130)
+        self.played_tones_label.setVisible(False)
 
         self.play_melody = QPushButton(self)
         self.play_melody.setText("Play Melody")
         self.play_melody.setMinimumSize(150, 100)
         self.play_melody.setStyleSheet("background-color: green")
         self.play_melody.move(600, 150)
-        self.play_melody.clicked.connect(self.play_current_melody)
+        self.play_melody.clicked.connect(self.play_song)
         self.play_melody.setVisible(False)
 
         self.next_round_button = QPushButton(self)
@@ -139,11 +144,7 @@ class Game(QMainWindow):
         self.practice_button.clicked.connect(self.practice_button_clicked)
 
         self.round_info = QPushButton(self)
-        text1 = "Round no " + \
-            str(self.round) + " done.  \n You made " + \
-            str(self.round_points) + " Points."
-        self.round_info.setText(text1)
-        self.round_info.setMinimumSize(150, 100)
+        self.round_info.setMinimumSize(160, 100)
         self.round_info.setStyleSheet("background-color: lightblue")
         self.round_info.move(50, 150)
         self.round_info.setVisible(False)
@@ -161,7 +162,8 @@ class Game(QMainWindow):
         self.game_done_info.setMinimumSize(400, 50)
         self.game_done_info.move(220, 300)
         self.game_done_info.setVisible(False)
-        
+
+    # inits the help button content 
     def help_button_clicked(self):
         self.help_box = QDialog(self)
         self.help_box.setGeometry(0,0,650,400)
@@ -238,11 +240,8 @@ class Game(QMainWindow):
     def practice_button_clicked(self):
         self.practice_button.setEnabled(False)
         self.start_button.setEnabled(True)
-        print("practice button click!")
         self.game_state = GameState.PRACTICE
-        print(self.game_state)
         self.current_tones = melodies.select_practice_tones()
-        # self.handle_dippid_input()
 
     # adjusts the ui when the "start game" button was clicked
     # calls the start_game function
@@ -254,10 +253,9 @@ class Game(QMainWindow):
         self.play_melody.setVisible(True)
         self.song_name.setVisible(True)
         self.points_info.setVisible(True)
+        self.played_tones_label.setVisible(True)
         self.game_done_info.setVisible(False)
         self.start_the_game()
-
-
 
     # button 1 
     # not used but could be nice for a further version
@@ -278,6 +276,7 @@ class Game(QMainWindow):
     # calls the "play_tone" func and checks if the round is finsished
     def game_loop(self):
         if self.game_state == GameState.START:
+            self.display_next_note()
             self.get_sensor_data()
             if len(self.played_tones) < len(self.song):
                 if self.state_of_button == 1 and self.button_pressed == False:
@@ -299,6 +298,7 @@ class Game(QMainWindow):
         elif self.game_state == GameState.DONE:
             pass   
 
+    # function for receiving the sensor data for accelerometer and the button
     def get_sensor_data(self):
         try:
                 self.state_of_button = self.sensor.get_value('button_1')
@@ -330,10 +330,6 @@ class Game(QMainWindow):
             self.round_info.setVisible(True)
             self.points_info.setText("Points: " + str(self.points))
 
-    # gets called when the player wants to hear the current melody
-    def play_current_melody(self):
-        self.played_tones = self.song
-        self.play_song(self.song)
 
     # handles the sensor dippid data 
     # plays different tone depending to the angle of the dippid device
@@ -374,11 +370,14 @@ class Game(QMainWindow):
             except IndexError:
                 tone = ''
             self.played_tone = "5"
-            #and (self.last_played_tone != self.played_tone)
         if (tone != ''):
             self.synth_play_tone(tone)
             self.played_tones.append(tone)
-        self.last_played_tone = self.played_tone
+    
+    # displays the tone that the player hast du play next
+    def display_next_note(self):
+        self.note_to_play = self.song[len(self.played_tones)+1][0]
+        self.played_tones_label.setText("Next note: " + str(self.note_to_play))
 
     # sets the game state to "start" when a new game is started
     def start_the_game(self):
@@ -388,9 +387,9 @@ class Game(QMainWindow):
         self.new_round()
 
     # plays a song by calling the synthesizer with midi notes
-    def play_song(self, song):
-        for i in range(len(song)):
-            self.synth_play_tone(song[i][0], song[i][1])
+    def play_song(self):
+        for i in range(len(self.song)):
+            self.synth_play_tone(self.song[i][0], self.song[i][1])
 
     # calculates the general and round points 
     def calc_points(self):
@@ -414,7 +413,6 @@ class Game(QMainWindow):
         self.round_info.setVisible(False)
         self.select_new_song()
         self.song = self.current_values
-        print(self.song)
         song_name = self.current_song.replace("_", " ")
         song_name = song_name.capitalize()
         self.song_name.setText("Song name: " + song_name)
@@ -427,9 +425,6 @@ class Game(QMainWindow):
         self.current_song, values = melodies.select_new_song()
         self.current_values = values[0]
         self.current_tones = values[1]
-        print(self.current_song)
-        print(self.current_values)
-        print(self.current_tones)
         if (self.current_song in self.played_songs):
             self.select_new_song()
 
@@ -444,6 +439,7 @@ class Game(QMainWindow):
         self.practice_button.setVisible(True)
         self.start_button.setVisible(True)
         self.game_info_label.setVisible(True)
+        self.played_tones_label.setVisible(False)
         self.song_name.setText("Song name: ")
 
 
