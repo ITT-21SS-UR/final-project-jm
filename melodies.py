@@ -36,6 +36,8 @@ another_one_bites_the_dust = [("D3", 0.4), ("D3", 0.4), ("D3", 0.4), ("D3", 0.4)
                               ("G3", 0.4)]
 another_one_bites_the_dust_tones = ["D3", "F3", "G3"]
 
+practice_tones= ["C4", "D4", "E4", "F4", "G4"]
+
 songs_name_list = ["seven_nation_army", "amours_toujours", "i_cant_get_no_satisfaction", "smoke_on_the_water", "come_as_you_are", "another_one_bites_the_dust"]
 song_sounds_list = [seven_nation_army_tones, amours_toujours_tones, i_cant_get_no_satisfaction_tones, smoke_on_the_water_tones, come_as_you_are_tones, another_one_bites_the_dust_tones]
 
@@ -51,3 +53,6 @@ def select_new_song():
     random_song = random.choice(list(d.keys()))
     random_values = d.get(random_song)
     return random_song, random_values
+
+def select_practice_tones():
+    return practice_tones
