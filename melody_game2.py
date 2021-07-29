@@ -386,10 +386,6 @@ class Game(QMainWindow):
 
     # displays the tone that the player hast to play next
     def display_next_note(self):
-        print("test")
-        print(len(self.song))
-        print(len(self.played_tones))
-        print("----")
         try:
             self.note_to_play = self.song[len(self.played_tones)][0]
             self.played_tones_label.setText("Next note: " + str(self.note_to_play))
