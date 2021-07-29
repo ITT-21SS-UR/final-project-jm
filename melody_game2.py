@@ -112,7 +112,7 @@ class Game(QMainWindow):
         self.points_info.move(220, 110)
         self.points_info.setVisible(False)
         self.played_tones_label = QLabel(self)
-        self.played_tones_label.setText("Played notes: ")
+        self.played_tones_label.setText("Next note: ")
         self.played_tones_label.setMinimumSize(400, 50)
         self.played_tones_label.move(220, 130)
         self.played_tones_label.setVisible(False)
@@ -203,7 +203,7 @@ class Game(QMainWindow):
             "Wait: Do not press and hold the button, "
             "press it only once when you turned your phone",
             self.help_box)
-        font = PyQt5.QtGui.QFont()
+        font = QFont()
         font.setBold(True)
         line9.setFont(font)
         line9.setStyleSheet("color: rgb(255,0,0)")
@@ -386,8 +386,16 @@ class Game(QMainWindow):
 
     # displays the tone that the player hast to play next
     def display_next_note(self):
-        self.note_to_play = self.song[len(self.played_tones)+1][0]
-        self.played_tones_label.setText("Next note: " + str(self.note_to_play))
+        print("test")
+        print(len(self.song))
+        print(len(self.played_tones))
+        print("----")
+        try:
+            self.note_to_play = self.song[len(self.played_tones)][0]
+            self.played_tones_label.setText("Next note: " + str(self.note_to_play))
+        except IndexError:
+            self.played_tones_label.setText("Next note: ")
+        
 
     # sets the game state to "start" when a new game is started
     def start_the_game(self):
